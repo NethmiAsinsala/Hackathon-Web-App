@@ -1,6 +1,7 @@
 // field-app/src/firebase.js
 import { initializeApp } from "firebase/app";
 import { getFirestore, collection, addDoc } from "firebase/firestore";
+import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
 
 // 👇 PASTE YOUR NEW KEYS FROM THE CONSOLE HERE
 const firebaseConfig = {
@@ -17,6 +18,20 @@ const app = initializeApp(firebaseConfig);
 
 // Initialize Firestore (The Cloud Database)
 export const firestoreDB = getFirestore(app);
+
+// Initialize Firebase Auth with local persistence
+// This keeps the user signed in even after browser/app closes
+export const auth = getAuth(app);
+
+// Set persistence to LOCAL - survives browser restart
+// Combined with our IndexedDB cache, this provides robust offline auth
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log('🔐 Firebase Auth persistence set to LOCAL');
+  })
+  .catch((error) => {
+    console.error('Failed to set auth persistence:', error);
+  });
 
 // Helper function to compress image to fit in Firestore (max ~800KB for safety)
 export const compressImage = (base64String, maxWidth = 800, quality = 0.6) => {
