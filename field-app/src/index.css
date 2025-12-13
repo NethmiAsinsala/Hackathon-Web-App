@@ -1179,3 +1179,11 @@ body {
   .app-container { max-width: 560px; }
   .type-grid { grid-template-columns: repeat(4, 1fr); }
 }
+
+/* Utility classes for icons */
+.inline { display: inline-block; vertical-align: middle; }
+.mr-1 { margin-right: 0.25rem; }
+.mr-2 { margin-right: 0.5rem; }
+.text-blue-500 { color: #3b82f6; }
+.text-green-500 { color: #22c55e; }
+.text-red-500 { color: #ef4444; }

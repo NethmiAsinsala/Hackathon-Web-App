@@ -2,6 +2,13 @@ import { useForm } from 'react-hook-form';
 import { useState, useEffect, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../src/db';
+import { 
+  Mountain, Waves, Flame, Construction, 
+  CircleCheck, CircleAlert, TriangleAlert, OctagonAlert,
+  Hospital, Utensils, Home, Truck, Car, Wrench,
+  AlertTriangle, Siren, Satellite, MapPin, Camera, Image,
+  CheckCircle, Hourglass, Inbox, ClipboardList, Users
+} from 'lucide-react';
 
 function IncidentForm() {
   const { register, handleSubmit, reset, watch, setValue } = useForm({
@@ -38,28 +45,28 @@ function IncidentForm() {
 
   // Type icons mapping
   const typeIcons = {
-    'Landslide': '🏔️',
-    'Flood': '🌊',
-    'Fire': '🔥',
-    'Blocked Road': '🚧'
+    'Landslide': <Mountain size={24} />,
+    'Flood': <Waves size={24} />,
+    'Fire': <Flame size={24} />,
+    'Blocked Road': <Construction size={24} />
   };
 
   // Severity config
   const severityConfig = {
-    'Low': { icon: '🟢', color: '#16a34a' },
-    'Medium': { icon: '🟡', color: '#f59e0b' },
-    'High': { icon: '🟠', color: '#ea580c' },
-    'Critical': { icon: '🔴', color: '#dc2626' }
+    'Low': { icon: <CircleCheck size={20} />, color: '#16a34a' },
+    'Medium': { icon: <CircleAlert size={20} />, color: '#f59e0b' },
+    'High': { icon: <TriangleAlert size={20} />, color: '#ea580c' },
+    'Critical': { icon: <OctagonAlert size={20} />, color: '#dc2626' }
   };
 
   // 🚑 Resources options
   const resourceOptions = [
-    { id: 'medical', label: 'Medical', icon: '🏥' },
-    { id: 'food', label: 'Food & Water', icon: '🍞' },
-    { id: 'shelter', label: 'Shelter', icon: '🏠' },
-    { id: 'rescue', label: 'Rescue Team', icon: '🚒' },
-    { id: 'evacuation', label: 'Evacuation', icon: '🚗' },
-    { id: 'equipment', label: 'Equipment', icon: '🔧' }
+    { id: 'medical', label: 'Medical', icon: <Hospital size={20} /> },
+    { id: 'food', label: 'Food & Water', icon: <Utensils size={20} /> },
+    { id: 'shelter', label: 'Shelter', icon: <Home size={20} /> },
+    { id: 'rescue', label: 'Rescue Team', icon: <Truck size={20} /> },
+    { id: 'evacuation', label: 'Evacuation', icon: <Car size={20} /> },
+    { id: 'equipment', label: 'Equipment', icon: <Wrench size={20} /> }
   ];
 
   // 📸 Handle photo capture
@@ -204,7 +211,7 @@ function IncidentForm() {
           onClick={handleSOS}
           disabled={isSubmitting || !location}
         >
-          <span className="sos-icon">🆘</span>
+          <span className="sos-icon"><Siren size={24} /></span>
           <span className="sos-text">EMERGENCY SOS</span>
           <span className="sos-subtext">Tap for immediate help</span>
         </button>
@@ -214,7 +221,7 @@ function IncidentForm() {
       <div className="card">
         {/* GPS Status Banner */}
         <div className={`gps-banner ${isLocating ? 'locating' : isGpsLocked ? 'locked' : 'offline'}`}>
-          <span className="gps-icon">{isLocating ? '📡' : isGpsLocked ? '📍' : '⚠️'}</span>
+          <span className="gps-icon">{isLocating ? <Satellite size={16} /> : isGpsLocked ? <MapPin size={16} /> : <AlertTriangle size={16} />}</span>
           <span>{gpsStatus}</span>
         </div>
 
@@ -331,11 +338,11 @@ function IncidentForm() {
                     id="photo-capture"
                   />
                   <label htmlFor="photo-capture" className="photo-capture-btn">
-                    <span className="photo-btn-icon">📷</span>
+                    <span className="photo-btn-icon"><Camera size={20} /></span>
                     <span>Take Photo</span>
                   </label>
                   <label htmlFor="photo-capture" className="photo-upload-btn">
-                    <span className="photo-btn-icon">🖼️</span>
+                    <span className="photo-btn-icon"><Image size={20} /></span>
                     <span>Gallery</span>
                   </label>
                 </div>
@@ -350,13 +357,13 @@ function IncidentForm() {
             disabled={isLocating || isSubmitting}
           >
             {showSuccess ? (
-              <>✅ Report Sent!</>
+              <><CheckCircle size={18} className="inline mr-2" /> Report Sent!</>
             ) : isLocating ? (
-              <>📡 Getting Location...</>
+              <><Satellite size={18} className="inline mr-2" /> Getting Location...</>
             ) : isSubmitting ? (
-              <>⏳ Saving...</>
+              <><Hourglass size={18} className="inline mr-2" /> Saving...</>
             ) : (
-              <>🚨 Submit Report</>
+              <><Siren size={18} className="inline mr-2" /> Submit Report</>
             )}
           </button>
         </form>
@@ -373,7 +380,7 @@ function IncidentForm() {
 
         {reports?.length === 0 ? (
           <div className="empty-state">
-            <div className="empty-icon">📭</div>
+            <div className="empty-icon"><Inbox size={48} /></div>
             <p className="empty-text">No reports yet. Submit one above!</p>
           </div>
         ) : (
@@ -383,7 +390,7 @@ function IncidentForm() {
               className={`report-card ${report.synced ? 'synced' : 'pending'} ${report.isSOS ? 'sos-report' : ''}`}
             >
               <span className="report-icon">
-                {report.isSOS ? '🆘' : typeIcons[report.type] || '📋'}
+                {report.isSOS ? <Siren size={24} /> : typeIcons[report.type] || <ClipboardList size={24} />}
               </span>
               <div className="report-content">
                 <div className="report-type">
@@ -396,11 +403,11 @@ function IncidentForm() {
                   </span>
                   {report.peopleAffected > 0 && (
                     <span className="report-badge badge-people">
-                      👥 {report.peopleAffected}
+                      <Users size={14} className="inline mr-1" /> {report.peopleAffected}
                     </span>
                   )}
                   {report.photoData && (
-                    <span className="report-badge badge-photo">📸</span>
+                    <span className="report-badge badge-photo"><Camera size={14} /></span>
                   )}
                 </div>
                 {report.resourcesNeeded?.length > 0 && (
@@ -411,7 +418,7 @@ function IncidentForm() {
                   </div>
                 )}
                 <div className={`report-status ${report.synced ? 'status-synced' : 'status-pending'}`}>
-                  {report.synced ? '✅ Synced to cloud' : '⏳ Waiting to sync'}
+                  {report.synced ? <><CheckCircle size={14} className="inline mr-1" /> Synced to cloud</> : <><Hourglass size={14} className="inline mr-1" /> Waiting to sync</>}
                   {report.timestamp && ` • ${formatTime(report.timestamp)}`}
                 </div>
               </div>

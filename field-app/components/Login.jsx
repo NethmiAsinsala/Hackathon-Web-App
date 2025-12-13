@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../src/context/AuthContext';
+import { WifiOff, ShieldAlert, AlertTriangle, Sparkles, Lock, Lightbulb } from 'lucide-react';
 
 function Login() {
   const { signIn, signUp, isOnline } = useAuth();
@@ -78,7 +79,7 @@ function Login() {
       {/* Offline Warning Banner */}
       {!isOnline && (
         <div className="offline-login-warning">
-          <span className="warning-icon">📡</span>
+          <span className="warning-icon"><WifiOff size={24} /></span>
           <div>
             <strong>You're offline</strong>
             <p>Connect to the internet to {isSignUp ? 'create an account' : 'sign in'}</p>
@@ -90,7 +91,7 @@ function Login() {
       <div className="login-card">
         {/* Logo & Header */}
         <div className="login-header">
-          <div className="login-logo">🛡️</div>
+          <div className="login-logo"><ShieldAlert size={48} /></div>
           <h1 className="login-title">Aegis Field</h1>
           <p className="login-subtitle">Emergency Response System</p>
         </div>
@@ -117,7 +118,7 @@ function Login() {
         <form onSubmit={handleSubmit} className="login-form">
           {error && (
             <div className="login-error">
-              <span>⚠️</span> {error}
+              <AlertTriangle size={16} className="inline mr-2" /> {error}
             </div>
           )}
 
@@ -192,7 +193,7 @@ function Login() {
               </>
             ) : (
               <>
-                <span>{isSignUp ? '✨' : '🔐'}</span> {isSignUp ? 'Create Account' : 'Sign In'}
+                <span>{isSignUp ? <Sparkles size={16} /> : <Lock size={16} />}</span> {isSignUp ? 'Create Account' : 'Sign In'}
               </>
             )}
           </button>
@@ -201,7 +202,7 @@ function Login() {
         {/* Info Footer */}
         <div className="login-footer">
           <p>
-            <span>💡</span> {isSignUp ? 'Create your account while online. Your session will persist for offline use.' : 'Sign in while online. Your session will persist for offline use.'}
+            <Lightbulb size={16} className="inline mr-2" /> {isSignUp ? 'Create your account while online. Your session will persist for offline use.' : 'Sign in while online. Your session will persist for offline use.'}
           </p>
         </div>
       </div>
@@ -209,7 +210,7 @@ function Login() {
       {/* Deployment Info */}
       <div className="deployment-info">
         <p>Field Responder App v1.0</p>
-        <p>🔒 Secure offline-capable authentication</p>
+        <p><Lock size={14} className="inline mr-1" /> Secure offline-capable authentication</p>
       </div>
     </div>
   );
