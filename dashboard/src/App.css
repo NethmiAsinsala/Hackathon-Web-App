@@ -1,1 +1,93 @@
 /* App-specific styles will go here */
+
+/* ===== New Report Flash Animation ===== */
+/* Using standardized severity colors:
+   Critical: #8B0000 (Dark Red)
+   High: #FF0000 (Red)
+   Medium: #FFA500 (Orange)
+   Low: #008000 (Green)
+*/
+
+@keyframes newReportFlash {
+  0%, 100% {
+    background-color: rgba(16, 185, 129, 0.3); /* emerald-500/30 for generic */
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+  }
+  50% {
+    background-color: rgba(16, 185, 129, 0.1);
+    box-shadow: 0 0 5px rgba(16, 185, 129, 0.2);
+  }
+}
+
+.animate-new-report {
+  animation: newReportFlash 0.5s ease-in-out 6; /* Flash 6 times (3 seconds total) */
+  border-left: 3px solid #10b981 !important; /* emerald-500 */
+}
+
+/* Critical report gets Dark Red flash (#FF3838) */
+.animate-new-report-critical {
+  animation: newReportFlashCritical 0.4s ease-in-out 8; /* Flash 8 times */
+  border-left: 3px solid #FF3838 !important; /* Dark Red */
+}
+
+@keyframes newReportFlashCritical {
+  0%, 100% {
+    background-color: rgba(255, 56, 56, 0.3); /* Dark Red 30% */
+    box-shadow: 0 0 25px rgba(255, 56, 56, 0.6);
+  }
+  50% {
+    background-color: rgba(255, 56, 56, 0.1);
+    box-shadow: 0 0 5px rgba(255, 56, 56, 0.2);
+  }
+}
+
+/* High severity gets Orange-Yellow flash (#FFB302) */
+.animate-new-report-high {
+  animation: newReportFlashHigh 0.4s ease-in-out 8;
+  border-left: 3px solid #FFB302 !important; /* Orange-Yellow */
+}
+
+@keyframes newReportFlashHigh {
+  0%, 100% {
+    background-color: rgba(255, 179, 2, 0.3); /* Orange-Yellow 30% */
+    box-shadow: 0 0 25px rgba(255, 179, 2, 0.6);
+  }
+  50% {
+    background-color: rgba(255, 179, 2, 0.1);
+    box-shadow: 0 0 5px rgba(255, 179, 2, 0.2);
+  }
+}
+
+/* Medium severity gets Yellow flash (#FCE83A) */
+.animate-new-report-medium {
+  animation: newReportFlashMedium 0.5s ease-in-out 6;
+  border-left: 3px solid #FCE83A !important; /* Yellow */
+}
+
+@keyframes newReportFlashMedium {
+  0%, 100% {
+    background-color: rgba(252, 232, 58, 0.3); /* Yellow 30% */
+    box-shadow: 0 0 20px rgba(252, 232, 58, 0.5);
+  }
+  50% {
+    background-color: rgba(252, 232, 58, 0.1);
+    box-shadow: 0 0 5px rgba(252, 232, 58, 0.2);
+  }
+}
+
+/* Low severity gets Bright Green flash (#56F000) */
+.animate-new-report-low {
+  animation: newReportFlashLow 0.5s ease-in-out 6;
+  border-left: 3px solid #56F000 !important; /* Bright Green */
+}
+
+@keyframes newReportFlashLow {
+  0%, 100% {
+    background-color: rgba(86, 240, 0, 0.3); /* Bright Green 30% */
+    box-shadow: 0 0 20px rgba(86, 240, 0, 0.5);
+  }
+  50% {
+    background-color: rgba(86, 240, 0, 0.1);
+    box-shadow: 0 0 5px rgba(86, 240, 0, 0.2);
+  }
+}
