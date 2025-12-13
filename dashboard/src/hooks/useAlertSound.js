@@ -1,9 +1,9 @@
 // useAlertSound Hook - Plays audio alerts for critical incidents
 // ==============================================================
 
-import { useRef, useCallback, useState } from 'react'
+import { useRef, useCallback, useState, useEffect } from 'react'
 
-// Local alarm sound file
+// Local alarm sound file - using absolute path from public folder
 const ALARM_SOUND_URL = '/sounds/alarm.mp3'
 
 function useAlertSound() {
@@ -14,18 +14,35 @@ function useAlertSound() {
   // Minimum time between alerts (prevent spam)
   const COOLDOWN_MS = 5000 // 5 seconds
 
-  // Preload the audio file
-  const preloadAudio = useCallback(() => {
-    if (!audioRef.current) {
-      audioRef.current = new Audio(ALARM_SOUND_URL)
-      audioRef.current.preload = 'auto'
-      audioRef.current.volume = 0.7 // 70% volume
+  // Initialize audio on mount
+  useEffect(() => {
+    audioRef.current = new Audio(ALARM_SOUND_URL)
+    audioRef.current.preload = 'auto'
+    audioRef.current.volume = 0.7
+    
+    // Log when audio is ready
+    audioRef.current.addEventListener('canplaythrough', () => {
+      console.log('🔊 Alarm audio loaded and ready')
+    })
+    
+    audioRef.current.addEventListener('error', (e) => {
+      console.error('❌ Audio load error:', e.target.error)
+    })
+    
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current = null
+      }
     }
   }, [])
 
   // Play the alarm sound
   const playAlarmSound = useCallback(() => {
-    preloadAudio()
+    if (!audioRef.current) {
+      console.warn('Audio not initialized')
+      return
+    }
     
     try {
       // Reset to beginning if already playing
@@ -41,7 +58,7 @@ function useAlertSound() {
     } catch (err) {
       console.error('Audio error:', err)
     }
-  }, [preloadAudio])
+  }, [])
 
   // Stop the alarm
   const stopAlarm = useCallback(() => {
@@ -53,7 +70,7 @@ function useAlertSound() {
 
   // Unlock audio (required for browser autoplay policy)
   const unlockAudio = useCallback(() => {
-    preloadAudio()
+    if (!audioRef.current) return
     
     // Play and immediately pause to unlock
     audioRef.current.play()
@@ -64,7 +81,7 @@ function useAlertSound() {
       .catch((err) => {
         console.warn('Could not unlock audio:', err.message)
       })
-  }, [preloadAudio])
+  }, [])
 
   // Play alert based on severity
   const playAlert = useCallback((severity) => {
@@ -89,7 +106,8 @@ function useAlertSound() {
 
   // Test sound function
   const testSound = useCallback(() => {
-    preloadAudio()
+    if (!audioRef.current) return
+    
     audioRef.current.currentTime = 0
     audioRef.current.play()
       .then(() => {
@@ -99,7 +117,7 @@ function useAlertSound() {
       .catch((err) => {
         console.warn('Could not play test:', err.message)
       })
-  }, [preloadAudio])
+  }, [])
 
   return { 
     playAlert, 
