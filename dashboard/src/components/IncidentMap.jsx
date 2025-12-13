@@ -40,6 +40,31 @@ const severityIcons = {
 // Ratnapura, Sri Lanka coordinates
 const RATNAPURA_CENTER = [6.6828, 80.3992]
 
+// Helper function to calculate offset for overlapping markers
+const getMarkerOffset = (reports, currentReport, index) => {
+  // Find all reports at the same location
+  const sameLocationReports = reports.filter(
+    (r) => r.latitude === currentReport.latitude && r.longitude === currentReport.longitude
+  )
+  
+  // If only one report at this location, no offset needed
+  if (sameLocationReports.length <= 1) {
+    return { lat: 0, lng: 0 }
+  }
+  
+  // Find the index of current report among reports at same location
+  const localIndex = sameLocationReports.findIndex((r) => r.id === currentReport.id)
+  
+  // Calculate offset in a circular pattern around the original point
+  const offsetDistance = 0.0008 // Roughly 80-100 meters
+  const angle = (localIndex * 2 * Math.PI) / sameLocationReports.length
+  
+  return {
+    lat: offsetDistance * Math.cos(angle),
+    lng: offsetDistance * Math.sin(angle),
+  }
+}
+
 function IncidentMap({ reports = [] }) {
   return (
     <MapContainer
@@ -55,7 +80,7 @@ function IncidentMap({ reports = [] }) {
       />
 
       {/* Render markers for each report */}
-      {reports.map((report) => {
+      {reports.map((report, index) => {
         // Skip reports without valid coordinates
         if (!report.latitude || !report.longitude) return null
         
@@ -64,10 +89,15 @@ function IncidentMap({ reports = [] }) {
           ? report.timestamp.toDate().toLocaleString()
           : 'Unknown time'
 
+        // Calculate offset for overlapping markers
+        const offset = getMarkerOffset(reports, report, index)
+        const adjustedLat = report.latitude + offset.lat
+        const adjustedLng = report.longitude + offset.lng
+
         return (
           <Marker
             key={report.id}
-            position={[report.latitude, report.longitude]}
+            position={[adjustedLat, adjustedLng]}
             icon={icon}
           >
             <Popup>
@@ -76,6 +106,7 @@ function IncidentMap({ reports = [] }) {
                 <div className="text-sm text-gray-600 mt-1">{report.description || 'No description'}</div>
                 <div className="mt-2 flex items-center justify-between">
                   <span className={`text-xs font-semibold px-2 py-1 rounded ${
+                    report.severity === 'Critical' ? 'bg-purple-100 text-purple-600' :
                     report.severity === 'High' ? 'bg-red-100 text-red-600' :
                     report.severity === 'Medium' ? 'bg-yellow-100 text-yellow-700' :
                     'bg-blue-100 text-blue-600'
