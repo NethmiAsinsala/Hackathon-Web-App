@@ -1,4 +1,5 @@
 import './App.css'
+import IncidentMap from './components/IncidentMap'
 
 function App() {
   return (
@@ -32,11 +33,8 @@ function App() {
               📍 Live Incident Map
             </h2>
           </div>
-          <div className="flex-1 flex items-center justify-center bg-slate-900/50">
-            <div className="text-center text-slate-500">
-              <div className="text-4xl mb-2">🗺️</div>
-              <p>Map Component (Stage 3)</p>
-            </div>
+          <div className="flex-1">
+            <IncidentMap />
           </div>
         </section>
 
