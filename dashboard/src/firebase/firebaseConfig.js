@@ -1,18 +1,31 @@
 // Firebase Configuration for Project Aegis
 // ==========================================
-// INSTRUCTIONS: Replace the placeholder values below with your Firebase project credentials.
-// Get these from: Firebase Console → Project Settings → Your Apps → Web App → Config
+// Uses environment variables for security
+// Set these in .env.local file (see .env.example)
 
 import { initializeApp } from 'firebase/app'
 import { getFirestore } from 'firebase/firestore'
 
+// Validate required environment variables
+const requiredEnvVars = [
+  'VITE_FIREBASE_API_KEY',
+  'VITE_FIREBASE_AUTH_DOMAIN',
+  'VITE_FIREBASE_PROJECT_ID',
+]
+
+requiredEnvVars.forEach((varName) => {
+  if (!import.meta.env[varName]) {
+    console.warn(`⚠️ Missing environment variable: ${varName}`)
+  }
+})
+
 const firebaseConfig = {
-    apiKey: "AIzaSyBBVFcJ6OTZXAUcHELdK4sgigDaY75rk2o",
-    authDomain: "hackathon-project-eaab9.firebaseapp.com",
-    projectId: "hackathon-project-eaab9",
-    storageBucket: "hackathon-project-eaab9.firebasestorage.app",
-    messagingSenderId: "809284481182",
-    appId: "1:809284481182:web:fee44b491200a9ac368b8f"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 }
 
 // Initialize Firebase

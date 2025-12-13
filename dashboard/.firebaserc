@@ -1,0 +1,13 @@
+{
+  "projects": {},
+  "targets": {
+    "hackathon-project-eaab9": {
+      "hosting": {
+        "dashboard": [
+          "aegis-dashboard-cb0d9"
+        ]
+      }
+    }
+  },
+  "etags": {}
+}

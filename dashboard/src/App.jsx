@@ -2,12 +2,41 @@ import { useState, useMemo, useEffect } from 'react'
 import './App.css'
 import IncidentMap from './components/IncidentMap'
 import LiveFeed from './components/LiveFeed'
+import AnalyticsPanel from './components/AnalyticsPanel'
+import FilterPanel from './components/FilterPanel'
+import IncidentDetailsModal from './components/IncidentDetailsModal'
 import useReports from './hooks/useReports'
 import useAlertSound from './hooks/useAlertSound'
+import useOnlineStatus from './hooks/useOnlineStatus'
 import { SEVERITY_COLORS, SEVERITY_BG_COLORS, SEVERITY_BORDER_COLORS } from './constants/colors'
+import { 
+  WifiOff, 
+  BarChart3, 
+  Loader2, 
+  Shield, 
+  MapPin, 
+  Bell, 
+  BellRing, 
+  Volume2, 
+  VolumeX,
+  LayoutDashboard,
+  Filter,
+  ChevronDown,
+  ChevronUp
+} from 'lucide-react'
 
 // Severity filter options
 const SEVERITY_OPTIONS = ['All', 'Critical', 'High', 'Medium', 'Low']
+
+// Offline Banner Component
+function OfflineBanner() {
+  return (
+    <div className="bg-red-600 text-white px-4 py-2 text-center text-sm font-medium animate-pulse flex items-center justify-center gap-2">
+      <WifiOff className="w-4 h-4" />
+      You are offline. Some features may not work correctly.
+    </div>
+  )
+}
 
 // Stats Header Component
 function StatsHeader({ reports, loading }) {
@@ -46,7 +75,7 @@ function StatsHeader({ reports, loading }) {
     return (
       <div className="bg-slate-800/50 border-b border-slate-700 px-6 py-2">
         <div className="flex items-center justify-center gap-2 text-slate-400 text-sm">
-          <span className="animate-pulse">⏳</span> Loading statistics...
+          <Loader2 className="w-4 h-4 animate-spin" /> Loading statistics...
         </div>
       </div>
     )
@@ -59,7 +88,7 @@ function StatsHeader({ reports, loading }) {
         <div className="flex items-center gap-4">
           {/* Total Reports */}
           <div className="flex items-center gap-2 px-3 py-1 bg-slate-700/50 rounded-lg">
-            <span className="text-lg">📊</span>
+            <BarChart3 className="w-5 h-5 text-slate-400" />
             <div>
               <p className="text-xs text-slate-400">Total</p>
               <p className="text-lg font-bold text-white leading-none">{stats.total}</p>
@@ -148,6 +177,9 @@ function App() {
   // Audio alert hook
   const { playAlert, testSound, isUnlocked, stopAlarm } = useAlertSound()
   
+  // Online status hook
+  const isOnline = useOnlineStatus()
+  
   // Sound enabled state
   const [soundEnabled, setSoundEnabled] = useState(true)
   
@@ -156,6 +188,23 @@ function App() {
   
   // Severity filter state
   const [severityFilter, setSeverityFilter] = useState('All')
+  
+  // Analytics panel visibility
+  const [showAnalytics, setShowAnalytics] = useState(false)
+
+  // Filter panel visibility
+  const [showFilters, setShowFilters] = useState(false)
+
+  // Search and filter states
+  const [searchQuery, setSearchQuery] = useState('')
+  const [dateRange, setDateRange] = useState('all')
+  const [customStartDate, setCustomStartDate] = useState('')
+  const [customEndDate, setCustomEndDate] = useState('')
+  const [statusFilter, setStatusFilter] = useState('All')
+  const [typeFilter, setTypeFilter] = useState('All')
+
+  // Incident details modal state
+  const [selectedIncident, setSelectedIncident] = useState(null)
 
   // Play alert when new critical/high report arrives
   useEffect(() => {
@@ -164,11 +213,90 @@ function App() {
     }
   }, [newReport, soundEnabled, playAlert])
 
-  // Filter reports based on selected severity
+  // Calculate active filter count
+  const activeFilterCount = useMemo(() => {
+    let count = 0
+    if (searchQuery) count++
+    if (dateRange !== 'all') count++
+    if (statusFilter !== 'All') count++
+    if (typeFilter !== 'All') count++
+    if (severityFilter !== 'All') count++
+    return count
+  }, [searchQuery, dateRange, statusFilter, typeFilter, severityFilter])
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSearchQuery('')
+    setDateRange('all')
+    setCustomStartDate('')
+    setCustomEndDate('')
+    setStatusFilter('All')
+    setTypeFilter('All')
+    setSeverityFilter('All')
+  }
+
+  // Filter reports based on all criteria
   const filteredReports = useMemo(() => {
-    if (severityFilter === 'All') return reports
-    return reports.filter(report => report.severity === severityFilter)
-  }, [reports, severityFilter])
+    let result = reports
+
+    // Severity filter
+    if (severityFilter !== 'All') {
+      result = result.filter(report => report.severity === severityFilter)
+    }
+
+    // Search filter (type, description, location)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      result = result.filter(report => 
+        (report.type || '').toLowerCase().includes(query) ||
+        (report.description || '').toLowerCase().includes(query) ||
+        (report.location || '').toLowerCase().includes(query)
+      )
+    }
+
+    // Date range filter
+    if (dateRange !== 'all') {
+      const now = new Date()
+      let startDate = null
+      let endDate = now
+
+      if (dateRange === 'today') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      } else if (dateRange === '7days') {
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      } else if (dateRange === '30days') {
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+      } else if (dateRange === 'custom' && customStartDate) {
+        startDate = new Date(customStartDate)
+        if (customEndDate) {
+          endDate = new Date(customEndDate)
+          endDate.setHours(23, 59, 59, 999)
+        }
+      }
+
+      if (startDate) {
+        result = result.filter(report => {
+          const reportDate = report.timestamp?.toDate ? report.timestamp.toDate() : new Date(report.timestamp)
+          return reportDate >= startDate && reportDate <= endDate
+        })
+      }
+    }
+
+    // Status filter
+    if (statusFilter !== 'All') {
+      result = result.filter(report => {
+        const status = report.status || 'Pending'
+        return status === statusFilter
+      })
+    }
+
+    // Type filter
+    if (typeFilter !== 'All') {
+      result = result.filter(report => report.type === typeFilter)
+    }
+
+    return result
+  }, [reports, severityFilter, searchQuery, dateRange, customStartDate, customEndDate, statusFilter, typeFilter])
 
   // Handle report click from LiveFeed
   const handleReportClick = (reportId) => {
@@ -180,14 +308,28 @@ function App() {
     setTimeout(() => setSelectedReportId(null), 2000)
   }
 
+  // Handle opening incident details modal
+  const handleViewDetails = (report) => {
+    setSelectedIncident(report)
+  }
+
+  // Handle locate on map from modal
+  const handleLocateOnMap = (reportId) => {
+    setSelectedReportId(reportId)
+    setTimeout(() => setSelectedReportId(null), 2000)
+  }
+
   return (
     <div className="h-screen flex flex-col bg-slate-900 text-white overflow-hidden">
+      {/* ===== OFFLINE BANNER ===== */}
+      {!isOnline && <OfflineBanner />}
+      
       {/* ===== HEADER ===== */}
       <header className="bg-slate-800 border-b border-slate-700 px-6 py-3 flex items-center justify-between shrink-0">
         {/* Logo & Title */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
-            <span className="text-xl">🛡️</span>
+            <Shield className="w-6 h-6 text-white" />
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight">Project Aegis</h1>
@@ -230,8 +372,35 @@ function App() {
           </div>
         </div>
 
-        {/* Right side: Sound Toggle + Connection Status */}
+        {/* Right side: Filter Toggle + Analytics + Sound Toggle + Connection Status */}
         <div className="flex items-center gap-3">
+          {/* Filter Toggle Button */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-full transition-colors ${
+              showFilters || activeFilterCount > 0
+                ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
+                : 'bg-slate-700/50 text-slate-400 hover:bg-slate-700'
+            }`}
+            title="Toggle Search & Filters"
+          >
+            <Filter className="w-5 h-5" />
+            <span className="text-xs font-medium hidden sm:inline">
+              Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
+            </span>
+            {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+
+          {/* Analytics Button */}
+          <button
+            onClick={() => setShowAnalytics(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 rounded-full transition-colors"
+            title="Open Analytics Dashboard"
+          >
+            <LayoutDashboard className="w-5 h-5" />
+            <span className="text-xs font-medium hidden sm:inline">Analytics</span>
+          </button>
+
           {/* Test Sound Button - Click to unlock audio */}
           <button
             onClick={testSound}
@@ -242,7 +411,7 @@ function App() {
             }`}
             title={isUnlocked ? 'Click to test alert sound' : 'Click to enable sound alerts'}
           >
-            <span className="text-lg">{isUnlocked ? '🔊' : '🔔'}</span>
+            {isUnlocked ? <Volume2 className="w-5 h-5" /> : <BellRing className="w-5 h-5" />}
             <span className="text-xs font-medium hidden sm:inline">
               {isUnlocked ? 'Test Sound' : 'Enable Sound'}
             </span>
@@ -258,7 +427,7 @@ function App() {
             }`}
             title={soundEnabled ? 'Sound alerts ON - Click to mute' : 'Sound alerts OFF - Click to enable'}
           >
-            <span className="text-lg">{soundEnabled ? '🔊' : '🔇'}</span>
+            {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
             <span className="text-xs font-medium hidden sm:inline">
               {soundEnabled ? 'ON' : 'OFF'}
             </span>
@@ -289,15 +458,36 @@ function App() {
       {/* ===== STATS HEADER ===== */}
       <StatsHeader reports={reports} loading={loading} />
 
+      {/* ===== FILTER PANEL ===== */}
+      {showFilters && (
+        <FilterPanel
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          customStartDate={customStartDate}
+          onCustomStartDateChange={setCustomStartDate}
+          customEndDate={customEndDate}
+          onCustomEndDateChange={setCustomEndDate}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          typeFilter={typeFilter}
+          onTypeFilterChange={setTypeFilter}
+          onClearFilters={clearAllFilters}
+          activeFilterCount={activeFilterCount}
+        />
+      )}
+
       {/* ===== MAIN CONTENT ===== */}
       <main className="flex-1 flex overflow-hidden">
         {/* LEFT: Map Panel (66%) */}
         <section className="w-2/3 bg-slate-800 border-r border-slate-700 flex flex-col">
           <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
-              📍 Live Incident Map
+            <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-emerald-400" />
+              Live Incident Map
             </h2>
-            {severityFilter !== 'All' && (
+            {activeFilterCount > 0 && (
               <span className="text-xs text-slate-400">
                 Showing {filteredReports.length} of {reports.length} reports
               </span>
@@ -317,8 +507,27 @@ function App() {
           selectedReportId={selectedReportId}
           newReportId={newReport?.id}
           onStatusChange={updateReportStatus}
+          onViewDetails={handleViewDetails}
         />
       </main>
+
+      {/* ===== ANALYTICS MODAL ===== */}
+      {showAnalytics && (
+        <AnalyticsPanel 
+          reports={reports} 
+          onClose={() => setShowAnalytics(false)} 
+        />
+      )}
+
+      {/* ===== INCIDENT DETAILS MODAL ===== */}
+      {selectedIncident && (
+        <IncidentDetailsModal
+          report={selectedIncident}
+          onClose={() => setSelectedIncident(null)}
+          onStatusChange={updateReportStatus}
+          onLocateOnMap={handleLocateOnMap}
+        />
+      )}
     </div>
   )
 }
