@@ -27,7 +27,8 @@ function IncidentForm() {
   // 📸 Photo capture state
   const [photoPreview, setPhotoPreview] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
-  const fileInputRef = useRef(null);
+  const cameraInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
 
   // Watch form values for visual feedback
   const selectedType = watch('type');
@@ -85,9 +86,8 @@ function IncidentForm() {
   const removePhoto = () => {
     setPhotoPreview(null);
     setPhotoFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
+    if (galleryInputRef.current) galleryInputRef.current.value = '';
   };
 
   useEffect(() => {
@@ -141,7 +141,8 @@ function IncidentForm() {
     reset();
     setPhotoPreview(null);
     setPhotoFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (cameraInputRef.current) cameraInputRef.current.value = '';
+    if (galleryInputRef.current) galleryInputRef.current.value = '';
     setIsSubmitting(false);
     setShowSuccess(true);
     
@@ -328,20 +329,32 @@ function IncidentForm() {
                 </div>
               ) : (
                 <div className="photo-buttons">
+                  {/* Camera Input (Forces Camera on Mobile) */}
                   <input
                     type="file"
                     accept="image/*"
                     capture="environment"
-                    ref={fileInputRef}
+                    ref={cameraInputRef}
                     onChange={handlePhotoCapture}
                     className="photo-input"
-                    id="photo-capture"
+                    id="photo-camera"
                   />
-                  <label htmlFor="photo-capture" className="photo-capture-btn">
+                  
+                  {/* Gallery Input (Standard File Picker) */}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    ref={galleryInputRef}
+                    onChange={handlePhotoCapture}
+                    className="photo-input"
+                    id="photo-gallery"
+                  />
+
+                  <label htmlFor="photo-camera" className="photo-capture-btn">
                     <span className="photo-btn-icon"><Camera size={20} /></span>
                     <span>Take Photo</span>
                   </label>
-                  <label htmlFor="photo-capture" className="photo-upload-btn">
+                  <label htmlFor="photo-gallery" className="photo-upload-btn">
                     <span className="photo-btn-icon"><Image size={20} /></span>
                     <span>Gallery</span>
                   </label>
