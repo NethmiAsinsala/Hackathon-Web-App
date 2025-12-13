@@ -1,7 +1,7 @@
 // src/utils/sendAlerts.js
 export const sendToDiscord = async (report) => {
   // REPLACE WITH YOUR WEBHOOK URL
-  const WEBHOOK_URL = "https://discord.com/api/webhooks/1449391992504062153/B8_DEv5GcTi-WuS76mgtv8GeD2iuDeRv1y4dFgLmla8UGIvUcFnnGWvfHgRa4FY9wLAC";
+  const WEBHOOK_URL = import.meta.env.VITE_DISCORD_WEBHOOK_URL;
 
   // Normalize severity to lowercase
   const severity = report.severity?.toLowerCase();

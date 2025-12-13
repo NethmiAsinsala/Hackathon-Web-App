@@ -5,12 +5,12 @@ import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth"
 
 // 👇 PASTE YOUR NEW KEYS FROM THE CONSOLE HERE
 const firebaseConfig = {
-  apiKey: "AIzaSyBBVFcJ6OTZXAUcHELdK4sgigDaY75rk2o",
-  authDomain: "hackathon-project-eaab9.firebaseapp.com",
-  projectId: "hackathon-project-eaab9",
-  storageBucket: "hackathon-project-eaab9.firebasestorage.app",
-  messagingSenderId: "809284481182",
-  appId: "1:809284481182:web:fee44b491200a9ac368b8f"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 // Initialize Firebase

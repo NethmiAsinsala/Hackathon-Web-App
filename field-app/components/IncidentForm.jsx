@@ -411,10 +411,11 @@ function IncidentForm() {
                   )}
                 </div>
                 {report.resourcesNeeded?.length > 0 && (
-                  <div className="report-resources">
-                    {report.resourcesNeeded.map(r => 
-                      resourceOptions.find(opt => opt.id === r)?.icon
-                    ).join(' ')}
+                  <div className="report-resources" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {report.resourcesNeeded.map(r => {
+                      const option = resourceOptions.find(opt => opt.id === r);
+                      return option ? <span key={r} title={option.label}>{option.icon}</span> : null;
+                    })}
                   </div>
                 )}
                 <div className={`report-status ${report.synced ? 'status-synced' : 'status-pending'}`}>
