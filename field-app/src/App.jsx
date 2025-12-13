@@ -1,37 +1,47 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
-import { db } from './db';
-console.log("Database Loaded:", db);
+import { useEffect, useState } from 'react'
+import { db } from './db'
+import IncidentForm from '../components/IncidentForm'
+import { useSync } from './hook/useSync';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  
+  // Run the sync hook
+  useSync(); 
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+      {/* Connection Status Bar */}
+      <div className={`connection-bar ${isOnline ? 'online' : 'offline'}`}>
+        {isOnline ? '🟢 Online - Reports will sync' : '🔴 Offline - Reports saved locally'}
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
+      
+      <div className="app-container">
+        {/* Header */}
+        <header className="app-header">
+          <div className="app-logo">🛡️</div>
+          <h1 className="app-title">Aegis Field</h1>
+          <p className="app-subtitle">Emergency Response System</p>
+        </header>
+
+        {/* Main Form */}
+        <IncidentForm />
       </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
     </>
-  )
+  );
 }
 
-export default App
+export default App;
