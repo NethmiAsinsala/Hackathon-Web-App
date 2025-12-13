@@ -271,9 +271,9 @@ function IncidentForm() {
             />
           </div>
 
-          {/* 👥 People Affected */}
+          {/* People Affected */}
           <div className="form-group">
-            <label className="form-label">👥 People Affected (estimated)</label>
+            <label className="form-label">People Affected (estimated)</label>
             <input
               type="number"
               className="form-input"
@@ -283,9 +283,9 @@ function IncidentForm() {
             />
           </div>
 
-          {/* 🚑 Resources Needed */}
+          {/* Resources Needed */}
           <div className="form-group">
-            <label className="form-label">🚑 Resources Needed</label>
+            <label className="form-label">Resources Needed</label>
             <div className="resources-grid">
               {resourceOptions.map((resource) => (
                 <div key={resource.id} className="resource-option">
@@ -304,9 +304,9 @@ function IncidentForm() {
             </div>
           </div>
 
-          {/* 📸 Photo Capture */}
+          {/* Photo Capture */}
           <div className="form-group">
-            <label className="form-label">📸 Attach Photo (optional)</label>
+            <label className="form-label">Attach Photo (optional)</label>
             <div className="photo-capture">
               {photoPreview ? (
                 <div className="photo-preview-container">
@@ -366,7 +366,7 @@ function IncidentForm() {
       <div className="card reports-section">
         <div className="reports-header">
           <h2 className="reports-title">
-            📋 Recent Reports
+            Recent Reports
             <span className="reports-count">{reports?.length || 0}</span>
           </h2>
         </div>

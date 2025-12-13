@@ -31,8 +31,10 @@ function AppContent() {
         <header className="app-header">
           <div className="header-main">
             <div className="app-logo">🛡️</div>
-            <h1 className="app-title">Aegis Field</h1>
-            <p className="app-subtitle">Emergency Response System</p>
+            <div>
+              <h1 className="app-title">Aegis Field</h1>
+              <p className="app-subtitle">Emergency Response System</p>
+            </div>
           </div>
           
           {/* User Profile Button */}
