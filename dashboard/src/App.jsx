@@ -2,12 +2,36 @@ import { useState, useMemo, useEffect } from 'react'
 import './App.css'
 import IncidentMap from './components/IncidentMap'
 import LiveFeed from './components/LiveFeed'
+import AnalyticsPanel from './components/AnalyticsPanel'
 import useReports from './hooks/useReports'
 import useAlertSound from './hooks/useAlertSound'
+import useOnlineStatus from './hooks/useOnlineStatus'
 import { SEVERITY_COLORS, SEVERITY_BG_COLORS, SEVERITY_BORDER_COLORS } from './constants/colors'
+import { 
+  WifiOff, 
+  BarChart3, 
+  Loader2, 
+  Shield, 
+  MapPin, 
+  Bell, 
+  BellRing, 
+  Volume2, 
+  VolumeX,
+  LayoutDashboard 
+} from 'lucide-react'
 
 // Severity filter options
 const SEVERITY_OPTIONS = ['All', 'Critical', 'High', 'Medium', 'Low']
+
+// Offline Banner Component
+function OfflineBanner() {
+  return (
+    <div className="bg-red-600 text-white px-4 py-2 text-center text-sm font-medium animate-pulse flex items-center justify-center gap-2">
+      <WifiOff className="w-4 h-4" />
+      You are offline. Some features may not work correctly.
+    </div>
+  )
+}
 
 // Stats Header Component
 function StatsHeader({ reports, loading }) {
@@ -46,7 +70,7 @@ function StatsHeader({ reports, loading }) {
     return (
       <div className="bg-slate-800/50 border-b border-slate-700 px-6 py-2">
         <div className="flex items-center justify-center gap-2 text-slate-400 text-sm">
-          <span className="animate-pulse">⏳</span> Loading statistics...
+          <Loader2 className="w-4 h-4 animate-spin" /> Loading statistics...
         </div>
       </div>
     )
@@ -59,7 +83,7 @@ function StatsHeader({ reports, loading }) {
         <div className="flex items-center gap-4">
           {/* Total Reports */}
           <div className="flex items-center gap-2 px-3 py-1 bg-slate-700/50 rounded-lg">
-            <span className="text-lg">📊</span>
+            <BarChart3 className="w-5 h-5 text-slate-400" />
             <div>
               <p className="text-xs text-slate-400">Total</p>
               <p className="text-lg font-bold text-white leading-none">{stats.total}</p>
@@ -148,6 +172,9 @@ function App() {
   // Audio alert hook
   const { playAlert, testSound, isUnlocked, stopAlarm } = useAlertSound()
   
+  // Online status hook
+  const isOnline = useOnlineStatus()
+  
   // Sound enabled state
   const [soundEnabled, setSoundEnabled] = useState(true)
   
@@ -156,6 +183,9 @@ function App() {
   
   // Severity filter state
   const [severityFilter, setSeverityFilter] = useState('All')
+  
+  // Analytics panel visibility
+  const [showAnalytics, setShowAnalytics] = useState(false)
 
   // Play alert when new critical/high report arrives
   useEffect(() => {
@@ -182,12 +212,15 @@ function App() {
 
   return (
     <div className="h-screen flex flex-col bg-slate-900 text-white overflow-hidden">
+      {/* ===== OFFLINE BANNER ===== */}
+      {!isOnline && <OfflineBanner />}
+      
       {/* ===== HEADER ===== */}
       <header className="bg-slate-800 border-b border-slate-700 px-6 py-3 flex items-center justify-between shrink-0">
         {/* Logo & Title */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center">
-            <span className="text-xl">🛡️</span>
+            <Shield className="w-6 h-6 text-white" />
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight">Project Aegis</h1>
@@ -230,8 +263,18 @@ function App() {
           </div>
         </div>
 
-        {/* Right side: Sound Toggle + Connection Status */}
+        {/* Right side: Analytics + Sound Toggle + Connection Status */}
         <div className="flex items-center gap-3">
+          {/* Analytics Button */}
+          <button
+            onClick={() => setShowAnalytics(true)}
+            className="flex items-center gap-2 px-3 py-2 bg-purple-500/20 text-purple-400 hover:bg-purple-500/30 rounded-full transition-colors"
+            title="Open Analytics Dashboard"
+          >
+            <LayoutDashboard className="w-5 h-5" />
+            <span className="text-xs font-medium hidden sm:inline">Analytics</span>
+          </button>
+
           {/* Test Sound Button - Click to unlock audio */}
           <button
             onClick={testSound}
@@ -242,7 +285,7 @@ function App() {
             }`}
             title={isUnlocked ? 'Click to test alert sound' : 'Click to enable sound alerts'}
           >
-            <span className="text-lg">{isUnlocked ? '🔊' : '🔔'}</span>
+            {isUnlocked ? <Volume2 className="w-5 h-5" /> : <BellRing className="w-5 h-5" />}
             <span className="text-xs font-medium hidden sm:inline">
               {isUnlocked ? 'Test Sound' : 'Enable Sound'}
             </span>
@@ -258,7 +301,7 @@ function App() {
             }`}
             title={soundEnabled ? 'Sound alerts ON - Click to mute' : 'Sound alerts OFF - Click to enable'}
           >
-            <span className="text-lg">{soundEnabled ? '🔊' : '🔇'}</span>
+            {soundEnabled ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
             <span className="text-xs font-medium hidden sm:inline">
               {soundEnabled ? 'ON' : 'OFF'}
             </span>
@@ -294,8 +337,9 @@ function App() {
         {/* LEFT: Map Panel (66%) */}
         <section className="w-2/3 bg-slate-800 border-r border-slate-700 flex flex-col">
           <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
-              📍 Live Incident Map
+            <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-emerald-400" />
+              Live Incident Map
             </h2>
             {severityFilter !== 'All' && (
               <span className="text-xs text-slate-400">
@@ -319,6 +363,14 @@ function App() {
           onStatusChange={updateReportStatus}
         />
       </main>
+
+      {/* ===== ANALYTICS MODAL ===== */}
+      {showAnalytics && (
+        <AnalyticsPanel 
+          reports={reports} 
+          onClose={() => setShowAnalytics(false)} 
+        />
+      )}
     </div>
   )
 }

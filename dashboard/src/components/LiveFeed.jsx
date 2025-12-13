@@ -1,6 +1,7 @@
 // LiveFeed Component - Real-time incident table
 // ==============================================
 import { SEVERITY_COLORS, getSeverityStyles } from '../constants/colors'
+import { ClipboardList, Loader2, Inbox } from 'lucide-react'
 
 // Helper function to format timestamp
 const formatTimeAgo = (timestamp) => {
@@ -52,8 +53,9 @@ function LiveFeed({ reports = [], allReports = null, loading = false, onReportCl
     <section className="w-1/3 bg-slate-800 flex flex-col">
       {/* Header */}
       <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider">
-          📋 Live Feed
+        <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+          <ClipboardList className="w-4 h-4 text-emerald-400" />
+          Live Feed
         </h2>
         <span className="text-xs bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-full border border-emerald-500/30">
           {reports.length} Reports
@@ -64,12 +66,12 @@ function LiveFeed({ reports = [], allReports = null, loading = false, onReportCl
       <div className="flex-1 overflow-auto">
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-500">
-            <div className="text-4xl mb-2 animate-pulse">⏳</div>
+            <Loader2 className="w-10 h-10 mb-2 animate-spin text-slate-400" />
             <p className="text-sm">Loading reports...</p>
           </div>
         ) : reports.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-500">
-            <div className="text-4xl mb-2">📭</div>
+            <Inbox className="w-10 h-10 mb-2 text-slate-400" />
             <p className="text-sm">No active incidents</p>
             <p className="text-xs">Waiting for field reports...</p>
           </div>
