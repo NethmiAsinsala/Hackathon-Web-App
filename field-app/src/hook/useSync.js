@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { db } from '../db'; // Local Offline DB
-import { firestoreDB, collection, addDoc } from '../firebase'; // Cloud DB
+import { firestoreDB, collection, addDoc, compressImage } from '../firebase'; // Cloud DB
 import { sendToDiscord } from '../utils/sendAlerts';
 
 export function useSync() {
@@ -30,18 +30,35 @@ export function useSync() {
         console.log(`🔌 Online! Found ${pendingReports.length} reports to sync.`);
         
         for (const report of pendingReports) {
-        const { id, synced, ...reportData } = report;
+          const { id, synced, photoData, ...reportData } = report;
 
-        // 1. Upload to Firebase (The Database)
-        await addDoc(collection(firestoreDB, 'reports'), reportData);
+          // Compress photo if exists (to fit in Firestore ~800KB limit)
+          let compressedPhoto = null;
+          if (photoData) {
+            try {
+              console.log("📸 Compressing photo for Firestore...");
+              compressedPhoto = await compressImage(photoData, 600, 0.5);
+              console.log("📸 Photo compressed successfully");
+            } catch (photoError) {
+              console.warn("Photo compression failed:", photoError);
+            }
+          }
 
-        // 2. Trigger the Alert (The Notification)
-        // ⚡️ This runs immediately after upload success
-        await sendToDiscord(reportData); 
+          // Upload to Firestore with compressed photo directly
+          const firestoreData = {
+            ...reportData,
+            photoData: compressedPhoto // Store compressed base64 directly in Firestore
+          };
+          
+          await addDoc(collection(firestoreDB, 'reports'), firestoreData);
 
-        // 3. Mark as Complete locally
-        await db.reports.update(id, { synced: 1 });
-    }
+          // 2. Trigger the Alert (The Notification)
+          // ⚡️ This runs immediately after upload success
+          await sendToDiscord({ ...firestoreData, photoData: compressedPhoto }); 
+
+          // 3. Mark as Complete locally
+          await db.reports.update(id, { synced: 1 });
+        }
         alert("♻️ All offline reports synced to cloud!");
       }
     } catch (error) {

@@ -410,6 +410,261 @@ body {
   color: var(--warning);
 }
 
+/* ==========================================
+   🆘 SOS BUTTON STYLES
+   ========================================== */
+.sos-container {
+  margin-bottom: 16px;
+}
+
+.sos-btn {
+  width: 100%;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 20px rgba(220, 38, 38, 0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  position: relative;
+  overflow: hidden;
+}
+
+.sos-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+  animation: sos-shimmer 2s infinite;
+}
+
+@keyframes sos-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.sos-btn:hover:not(:disabled) {
+  transform: scale(1.02);
+  box-shadow: 0 8px 30px rgba(220, 38, 38, 0.6);
+}
+
+.sos-btn:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.sos-btn:disabled {
+  background: var(--gray-300);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.sos-icon {
+  font-size: 36px;
+  animation: sos-pulse 1.5s infinite;
+}
+
+@keyframes sos-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.sos-text {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.sos-subtext {
+  font-size: 12px;
+  opacity: 0.9;
+}
+
+.sos-badge {
+  display: inline-block;
+  background: #dc2626;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  margin-left: 8px;
+  animation: sos-pulse 1.5s infinite;
+}
+
+.sos-report {
+  border-left-color: #dc2626 !important;
+  background: #fef2f2;
+}
+
+/* ==========================================
+   👥 PEOPLE AFFECTED INPUT
+   ========================================== */
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  font-size: 16px;
+  background: var(--gray-50);
+  transition: all 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: white;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+
+/* ==========================================
+   🚑 RESOURCES NEEDED GRID
+   ========================================== */
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.resource-option {
+  position: relative;
+}
+
+.resource-option input {
+  position: absolute;
+  opacity: 0;
+}
+
+.resource-option label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  border: 2px solid var(--gray-200);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--gray-50);
+}
+
+.resource-option label:hover {
+  border-color: var(--gray-300);
+}
+
+.resource-option input:checked + label {
+  border-color: var(--success);
+  background: #dcfce7;
+}
+
+.resource-icon {
+  font-size: 24px;
+  margin-bottom: 4px;
+}
+
+.resource-text {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--gray-700);
+  text-align: center;
+}
+
+.report-resources {
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.badge-people {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.badge-photo {
+  background: #fae8ff;
+  color: #a21caf;
+}
+
+/* ==========================================
+   📸 PHOTO CAPTURE STYLES
+   ========================================== */
+.photo-capture {
+  margin-top: 8px;
+}
+
+.photo-input {
+  display: none;
+}
+
+.photo-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.photo-capture-btn,
+.photo-upload-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  border: 2px dashed var(--gray-300);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--gray-50);
+  color: var(--gray-700);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.photo-capture-btn:hover,
+.photo-upload-btn:hover {
+  border-color: var(--primary);
+  background: #fef2f2;
+}
+
+.photo-btn-icon {
+  font-size: 28px;
+  margin-bottom: 4px;
+}
+
+.photo-preview-container {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.photo-preview {
+  width: 100%;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 2px solid var(--gray-200);
+}
+
+.photo-remove-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.photo-remove-btn:hover {
+  background: #dc2626;
+}
+
 /* Empty State */
 .empty-state {
   text-align: center;

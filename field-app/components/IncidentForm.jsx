@@ -1,23 +1,31 @@
 import { useForm } from 'react-hook-form';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../src/db';
 
 function IncidentForm() {
-  const { register, handleSubmit, reset, watch } = useForm({
+  const { register, handleSubmit, reset, watch, setValue } = useForm({
     defaultValues: {
       type: 'Flood',
-      severity: 'Medium'
+      severity: 'Medium',
+      peopleAffected: '',
+      resourcesNeeded: []
     }
   });
   const [location, setLocation] = useState(null);
   const [gpsStatus, setGpsStatus] = useState('Locating...');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  
+  // 📸 Photo capture state
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoFile, setPhotoFile] = useState(null);
+  const fileInputRef = useRef(null);
 
   // Watch form values for visual feedback
   const selectedType = watch('type');
   const selectedSeverity = watch('severity');
+  const selectedResources = watch('resourcesNeeded');
 
   // 🔴 Live query - auto-updates when database changes
   const reports = useLiveQuery(
@@ -42,6 +50,37 @@ function IncidentForm() {
     'Medium': { icon: '🟡', color: '#f59e0b' },
     'High': { icon: '🟠', color: '#ea580c' },
     'Critical': { icon: '🔴', color: '#dc2626' }
+  };
+
+  // 🚑 Resources options
+  const resourceOptions = [
+    { id: 'medical', label: 'Medical', icon: '🏥' },
+    { id: 'food', label: 'Food & Water', icon: '🍞' },
+    { id: 'shelter', label: 'Shelter', icon: '🏠' },
+    { id: 'rescue', label: 'Rescue Team', icon: '🚒' },
+    { id: 'evacuation', label: 'Evacuation', icon: '🚗' },
+    { id: 'equipment', label: 'Equipment', icon: '🔧' }
+  ];
+
+  // 📸 Handle photo capture
+  const handlePhotoCapture = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removePhoto = () => {
+    setPhotoPreview(null);
+    setPhotoFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   useEffect(() => {
@@ -83,14 +122,67 @@ function IncidentForm() {
       longitude: location.lng,
       locationAccuracy: isFallback ? 'unknown' : 'precise',
       timestamp: new Date(),
-      synced: 0
+      synced: 0,
+      isSOS: false,
+      // Store photo as base64 for offline support (will be uploaded on sync)
+      photoData: photoPreview || null,
+      peopleAffected: data.peopleAffected ? parseInt(data.peopleAffected) : 0,
+      resourcesNeeded: data.resourcesNeeded || []
     };
 
     await db.reports.add(record);
     reset();
+    setPhotoPreview(null);
+    setPhotoFile(null);
+    if (fileInputRef.current) fileInputRef.current.value = '';
     setIsSubmitting(false);
     setShowSuccess(true);
+    
+    // Vibration feedback on mobile
+    if (navigator.vibrate) navigator.vibrate(200);
+    
     setTimeout(() => setShowSuccess(false), 3000);
+  };
+
+  // 🆘 SOS Emergency Handler
+  const handleSOS = async () => {
+    if (!location) {
+      alert("⚠️ Still getting your location. Please wait...");
+      return;
+    }
+
+    const confirmSOS = window.confirm(
+      "🆘 EMERGENCY SOS\n\nThis will immediately send a CRITICAL alert with your current location.\n\nContinue?"
+    );
+
+    if (!confirmSOS) return;
+
+    setIsSubmitting(true);
+
+    const isFallback = location.lat === FALLBACK_LOCATION.lat && location.lng === FALLBACK_LOCATION.lng;
+
+    const sosRecord = {
+      type: 'Emergency SOS',
+      severity: 'Critical',
+      description: '🆘 EMERGENCY SOS - Immediate assistance required!',
+      latitude: location.lat,
+      longitude: location.lng,
+      locationAccuracy: isFallback ? 'unknown' : 'precise',
+      timestamp: new Date(),
+      synced: 0,
+      isSOS: true,
+      photoData: null,
+      peopleAffected: 1,
+      resourcesNeeded: ['rescue', 'medical']
+    };
+
+    await db.reports.add(sosRecord);
+    
+    // Strong vibration pattern for SOS
+    if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 200]);
+    
+    setIsSubmitting(false);
+    alert("🆘 SOS Alert Sent!\n\nYour location has been shared. Help is on the way.");
   };
 
   const isLocating = gpsStatus === 'Locating...';
@@ -104,6 +196,20 @@ function IncidentForm() {
 
   return (
     <>
+      {/* 🆘 SOS Emergency Button - Always visible at top */}
+      <div className="sos-container">
+        <button 
+          type="button" 
+          className="sos-btn"
+          onClick={handleSOS}
+          disabled={isSubmitting || !location}
+        >
+          <span className="sos-icon">🆘</span>
+          <span className="sos-text">EMERGENCY SOS</span>
+          <span className="sos-subtext">Tap for immediate help</span>
+        </button>
+      </div>
+
       {/* Report Form Card */}
       <div className="card">
         {/* GPS Status Banner */}
@@ -165,6 +271,78 @@ function IncidentForm() {
             />
           </div>
 
+          {/* 👥 People Affected */}
+          <div className="form-group">
+            <label className="form-label">👥 People Affected (estimated)</label>
+            <input
+              type="number"
+              className="form-input"
+              placeholder="Enter number of people affected"
+              min="0"
+              {...register('peopleAffected')}
+            />
+          </div>
+
+          {/* 🚑 Resources Needed */}
+          <div className="form-group">
+            <label className="form-label">🚑 Resources Needed</label>
+            <div className="resources-grid">
+              {resourceOptions.map((resource) => (
+                <div key={resource.id} className="resource-option">
+                  <input
+                    type="checkbox"
+                    id={`resource-${resource.id}`}
+                    value={resource.id}
+                    {...register('resourcesNeeded')}
+                  />
+                  <label htmlFor={`resource-${resource.id}`}>
+                    <span className="resource-icon">{resource.icon}</span>
+                    <span className="resource-text">{resource.label}</span>
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 📸 Photo Capture */}
+          <div className="form-group">
+            <label className="form-label">📸 Attach Photo (optional)</label>
+            <div className="photo-capture">
+              {photoPreview ? (
+                <div className="photo-preview-container">
+                  <img src={photoPreview} alt="Preview" className="photo-preview" />
+                  <button 
+                    type="button" 
+                    className="photo-remove-btn"
+                    onClick={removePhoto}
+                  >
+                    ✕ Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="photo-buttons">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    capture="environment"
+                    ref={fileInputRef}
+                    onChange={handlePhotoCapture}
+                    className="photo-input"
+                    id="photo-capture"
+                  />
+                  <label htmlFor="photo-capture" className="photo-capture-btn">
+                    <span className="photo-btn-icon">📷</span>
+                    <span>Take Photo</span>
+                  </label>
+                  <label htmlFor="photo-capture" className="photo-upload-btn">
+                    <span className="photo-btn-icon">🖼️</span>
+                    <span>Gallery</span>
+                  </label>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Submit Button */}
           <button 
             type="submit" 
@@ -202,16 +380,36 @@ function IncidentForm() {
           reports?.map((report) => (
             <div 
               key={report.id} 
-              className={`report-card ${report.synced ? 'synced' : 'pending'}`}
+              className={`report-card ${report.synced ? 'synced' : 'pending'} ${report.isSOS ? 'sos-report' : ''}`}
             >
-              <span className="report-icon">{typeIcons[report.type] || '📋'}</span>
+              <span className="report-icon">
+                {report.isSOS ? '🆘' : typeIcons[report.type] || '📋'}
+              </span>
               <div className="report-content">
-                <div className="report-type">{report.type}</div>
+                <div className="report-type">
+                  {report.type}
+                  {report.isSOS && <span className="sos-badge">SOS</span>}
+                </div>
                 <div className="report-meta">
                   <span className={`report-badge badge-severity ${report.severity?.toLowerCase()}`}>
                     {severityConfig[report.severity]?.icon} {report.severity}
                   </span>
+                  {report.peopleAffected > 0 && (
+                    <span className="report-badge badge-people">
+                      👥 {report.peopleAffected}
+                    </span>
+                  )}
+                  {report.photoData && (
+                    <span className="report-badge badge-photo">📸</span>
+                  )}
                 </div>
+                {report.resourcesNeeded?.length > 0 && (
+                  <div className="report-resources">
+                    {report.resourcesNeeded.map(r => 
+                      resourceOptions.find(opt => opt.id === r)?.icon
+                    ).join(' ')}
+                  </div>
+                )}
                 <div className={`report-status ${report.synced ? 'status-synced' : 'status-pending'}`}>
                   {report.synced ? '✅ Synced to cloud' : '⏳ Waiting to sync'}
                   {report.timestamp && ` • ${formatTime(report.timestamp)}`}
