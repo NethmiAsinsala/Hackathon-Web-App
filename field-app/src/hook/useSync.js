@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db'; // Local Offline DB
 import { firestoreDB, collection, addDoc, compressImage } from '../firebase'; // Cloud DB
 import { sendToDiscord } from '../utils/sendAlerts';
@@ -7,16 +8,20 @@ export function useSync() {
   // Lock to prevent concurrent syncs
   const isSyncing = useRef(false);
 
+  // 🔴 Live query to detect unsynced reports immediately
+  // This will trigger a re-render and effect whenever a new report is added
+  const pendingReports = useLiveQuery(
+    () => db.reports.where('synced').equals(0).toArray()
+  );
+
   const syncReports = async () => {
     // Prevent multiple syncs running at once
     if (isSyncing.current) {
-      console.log("⏳ Sync already in progress, skipping...");
       return;
     }
 
     // 1. If offline, do nothing
     if (!navigator.onLine) {
-      console.log("📴 Offline. Waiting for signal...");
       return;
     }
 
@@ -24,12 +29,13 @@ export function useSync() {
       isSyncing.current = true;
 
       // 2. Find reports waiting to sync (synced = 0)
-      const pendingReports = await db.reports.where('synced').equals(0).toArray();
+      // We fetch again here to ensure we have the latest snapshot in the async function
+      const reportsToSync = await db.reports.where('synced').equals(0).toArray();
 
-      if (pendingReports.length > 0) {
-        console.log(`🔌 Online! Found ${pendingReports.length} reports to sync.`);
+      if (reportsToSync.length > 0) {
+        console.log(`🔌 Online! Found ${reportsToSync.length} reports to sync.`);
         
-        for (const report of pendingReports) {
+        for (const report of reportsToSync) {
           const { id, synced, photoData, ...reportData } = report;
 
           // Compress photo if exists (to fit in Firestore ~800KB limit)
@@ -59,7 +65,7 @@ export function useSync() {
           // 3. Mark as Complete locally
           await db.reports.update(id, { synced: 1 });
         }
-        alert("♻️ All offline reports synced to cloud!");
+        console.log("♻️ All offline reports synced to cloud!");
       }
     } catch (error) {
       console.error("Sync Error:", error);
@@ -67,6 +73,13 @@ export function useSync() {
       isSyncing.current = false;
     }
   };
+
+  // Trigger sync immediately when pending reports are detected
+  useEffect(() => {
+    if (pendingReports?.length > 0) {
+      syncReports();
+    }
+  }, [pendingReports]);
 
   useEffect(() => {
     // Check immediately on load
