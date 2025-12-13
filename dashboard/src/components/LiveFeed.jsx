@@ -1,7 +1,7 @@
 // LiveFeed Component - Real-time incident table
 // ==============================================
 import { SEVERITY_COLORS, getSeverityStyles } from '../constants/colors'
-import { ClipboardList, Loader2, Inbox } from 'lucide-react'
+import { ClipboardList, Loader2, Inbox, Eye } from 'lucide-react'
 
 // Helper function to format timestamp
 const formatTimeAgo = (timestamp) => {
@@ -37,7 +37,7 @@ const getStatusBadge = (status) => {
   }
 }
 
-function LiveFeed({ reports = [], allReports = null, loading = false, onReportClick = null, selectedReportId = null, newReportId = null, onStatusChange = null }) {
+function LiveFeed({ reports = [], allReports = null, loading = false, onReportClick = null, selectedReportId = null, newReportId = null, onStatusChange = null, onViewDetails = null }) {
   // Use allReports for stats if provided, otherwise use filtered reports
   const statsSource = allReports || reports
   
@@ -50,7 +50,7 @@ function LiveFeed({ reports = [], allReports = null, loading = false, onReportCl
   }
 
   return (
-    <section className="w-1/3 bg-slate-800 flex flex-col">
+    <section className="w-[750px] min-w-[750px] bg-slate-800 flex flex-col overflow-hidden">
       {/* Header */}
       <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
@@ -63,7 +63,7 @@ function LiveFeed({ reports = [], allReports = null, loading = false, onReportCl
       </div>
 
       {/* Table Content */}
-      <div className="flex-1 overflow-auto">
+      <div className="flex-1 overflow-y-auto" style={{ overflowX: 'hidden' }}>
         {loading ? (
           <div className="flex flex-col items-center justify-center h-full text-slate-500">
             <Loader2 className="w-10 h-10 mb-2 animate-spin text-slate-400" />
@@ -79,12 +79,12 @@ function LiveFeed({ reports = [], allReports = null, loading = false, onReportCl
           <table className="w-full text-xs">
             <thead className="bg-slate-900/50 sticky top-0">
               <tr className="text-slate-400 uppercase">
-                <th className="px-3 py-2 text-left font-medium">Type</th>
+                <th className="px-3 py-2 text-left font-medium w-[100px]">Type</th>
                 <th className="px-3 py-2 text-left font-medium">Description</th>
-                <th className="px-3 py-2 text-center font-medium">Severity</th>
-                <th className="px-3 py-2 text-center font-medium">Status</th>
-                <th className="px-3 py-2 text-center font-medium">Action</th>
-                <th className="px-3 py-2 text-right font-medium">Time</th>
+                <th className="px-3 py-2 text-center font-medium w-[80px]">Severity</th>
+                <th className="px-3 py-2 text-center font-medium w-[85px]">Status</th>
+                <th className="px-3 py-2 text-center font-medium w-[100px]">Action</th>
+                <th className="px-3 py-2 text-right font-medium w-[60px]">Time</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-700/50">
@@ -118,7 +118,7 @@ function LiveFeed({ reports = [], allReports = null, loading = false, onReportCl
                     {report.type || 'Unknown'}
                   </td>
                   <td className="px-3 py-2.5 text-slate-300">
-                    <div className="max-w-[180px] break-words line-clamp-2" title={report.description}>
+                    <div className="break-words">
                       {report.description || '-'}
                     </div>
                   </td>
@@ -137,33 +137,46 @@ function LiveFeed({ reports = [], allReports = null, loading = false, onReportCl
                   </td>
                   <td className="px-3 py-2.5 text-center">
                     {/* Status Action Buttons */}
-                    {(!report.status || report.status === 'Pending') && (
+                    <div className="flex items-center justify-center gap-1">
+                      {/* View Details Button */}
                       <button
                         onClick={(e) => {
                           e.stopPropagation()
-                          onStatusChange?.(report.id, 'In Progress')
+                          onViewDetails?.(report)
                         }}
-                        className="px-2 py-1 text-[10px] font-medium bg-blue-500/20 text-blue-400 hover:bg-blue-500/40 rounded transition-colors border border-blue-500/30"
-                        title="Mark as In Progress"
+                        className="p-1.5 text-slate-400 hover:text-white hover:bg-slate-600/50 rounded transition-colors"
+                        title="View Details"
                       >
-                        ▶ Start
+                        <Eye className="w-3.5 h-3.5" />
                       </button>
-                    )}
-                    {report.status === 'In Progress' && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onStatusChange?.(report.id, 'Resolved')
-                        }}
-                        className="px-2 py-1 text-[10px] font-medium bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/40 rounded transition-colors border border-emerald-500/30"
-                        title="Mark as Resolved"
-                      >
-                        ✓ Resolve
-                      </button>
-                    )}
-                    {report.status === 'Resolved' && (
-                      <span className="text-[10px] text-slate-500">✓ Done</span>
-                    )}
+                      {(!report.status || report.status === 'Pending') && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onStatusChange?.(report.id, 'In Progress')
+                          }}
+                          className="px-2 py-1 text-[10px] font-medium bg-blue-500/20 text-blue-400 hover:bg-blue-500/40 rounded transition-colors border border-blue-500/30"
+                          title="Mark as In Progress"
+                        >
+                          ▶ Start
+                        </button>
+                      )}
+                      {report.status === 'In Progress' && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onStatusChange?.(report.id, 'Resolved')
+                          }}
+                          className="px-2 py-1 text-[10px] font-medium bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/40 rounded transition-colors border border-emerald-500/30"
+                          title="Mark as Resolved"
+                        >
+                          ✓ Resolve
+                        </button>
+                      )}
+                      {report.status === 'Resolved' && (
+                        <span className="text-[10px] text-slate-500">✓ Done</span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-3 py-2.5 text-right text-slate-500 whitespace-nowrap">
                     {formatTimeAgo(report.timestamp)}

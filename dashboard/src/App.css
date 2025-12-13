@@ -91,3 +91,55 @@
     box-shadow: 0 0 5px rgba(86, 240, 0, 0.2);
   }
 }
+
+/* ===== Modal Animation ===== */
+@keyframes modalEnter {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-modal-enter {
+  animation: modalEnter 0.2s ease-out forwards;
+}
+
+/* ===== Filter Panel Slide Animation ===== */
+@keyframes filterSlideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-filter-slide {
+  animation: filterSlideDown 0.2s ease-out forwards;
+}
+
+/* ===== Image Loading Skeleton ===== */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, 
+    rgba(71, 85, 105, 0.3) 25%, 
+    rgba(71, 85, 105, 0.5) 50%, 
+    rgba(71, 85, 105, 0.3) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}

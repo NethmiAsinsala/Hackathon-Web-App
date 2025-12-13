@@ -3,6 +3,8 @@ import './App.css'
 import IncidentMap from './components/IncidentMap'
 import LiveFeed from './components/LiveFeed'
 import AnalyticsPanel from './components/AnalyticsPanel'
+import FilterPanel from './components/FilterPanel'
+import IncidentDetailsModal from './components/IncidentDetailsModal'
 import useReports from './hooks/useReports'
 import useAlertSound from './hooks/useAlertSound'
 import useOnlineStatus from './hooks/useOnlineStatus'
@@ -17,7 +19,10 @@ import {
   BellRing, 
   Volume2, 
   VolumeX,
-  LayoutDashboard 
+  LayoutDashboard,
+  Filter,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react'
 
 // Severity filter options
@@ -187,6 +192,20 @@ function App() {
   // Analytics panel visibility
   const [showAnalytics, setShowAnalytics] = useState(false)
 
+  // Filter panel visibility
+  const [showFilters, setShowFilters] = useState(false)
+
+  // Search and filter states
+  const [searchQuery, setSearchQuery] = useState('')
+  const [dateRange, setDateRange] = useState('all')
+  const [customStartDate, setCustomStartDate] = useState('')
+  const [customEndDate, setCustomEndDate] = useState('')
+  const [statusFilter, setStatusFilter] = useState('All')
+  const [typeFilter, setTypeFilter] = useState('All')
+
+  // Incident details modal state
+  const [selectedIncident, setSelectedIncident] = useState(null)
+
   // Play alert when new critical/high report arrives
   useEffect(() => {
     if (newReport && soundEnabled) {
@@ -194,11 +213,90 @@ function App() {
     }
   }, [newReport, soundEnabled, playAlert])
 
-  // Filter reports based on selected severity
+  // Calculate active filter count
+  const activeFilterCount = useMemo(() => {
+    let count = 0
+    if (searchQuery) count++
+    if (dateRange !== 'all') count++
+    if (statusFilter !== 'All') count++
+    if (typeFilter !== 'All') count++
+    if (severityFilter !== 'All') count++
+    return count
+  }, [searchQuery, dateRange, statusFilter, typeFilter, severityFilter])
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSearchQuery('')
+    setDateRange('all')
+    setCustomStartDate('')
+    setCustomEndDate('')
+    setStatusFilter('All')
+    setTypeFilter('All')
+    setSeverityFilter('All')
+  }
+
+  // Filter reports based on all criteria
   const filteredReports = useMemo(() => {
-    if (severityFilter === 'All') return reports
-    return reports.filter(report => report.severity === severityFilter)
-  }, [reports, severityFilter])
+    let result = reports
+
+    // Severity filter
+    if (severityFilter !== 'All') {
+      result = result.filter(report => report.severity === severityFilter)
+    }
+
+    // Search filter (type, description, location)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      result = result.filter(report => 
+        (report.type || '').toLowerCase().includes(query) ||
+        (report.description || '').toLowerCase().includes(query) ||
+        (report.location || '').toLowerCase().includes(query)
+      )
+    }
+
+    // Date range filter
+    if (dateRange !== 'all') {
+      const now = new Date()
+      let startDate = null
+      let endDate = now
+
+      if (dateRange === 'today') {
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+      } else if (dateRange === '7days') {
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+      } else if (dateRange === '30days') {
+        startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+      } else if (dateRange === 'custom' && customStartDate) {
+        startDate = new Date(customStartDate)
+        if (customEndDate) {
+          endDate = new Date(customEndDate)
+          endDate.setHours(23, 59, 59, 999)
+        }
+      }
+
+      if (startDate) {
+        result = result.filter(report => {
+          const reportDate = report.timestamp?.toDate ? report.timestamp.toDate() : new Date(report.timestamp)
+          return reportDate >= startDate && reportDate <= endDate
+        })
+      }
+    }
+
+    // Status filter
+    if (statusFilter !== 'All') {
+      result = result.filter(report => {
+        const status = report.status || 'Pending'
+        return status === statusFilter
+      })
+    }
+
+    // Type filter
+    if (typeFilter !== 'All') {
+      result = result.filter(report => report.type === typeFilter)
+    }
+
+    return result
+  }, [reports, severityFilter, searchQuery, dateRange, customStartDate, customEndDate, statusFilter, typeFilter])
 
   // Handle report click from LiveFeed
   const handleReportClick = (reportId) => {
@@ -207,6 +305,17 @@ function App() {
     
     setSelectedReportId(reportId)
     // Reset after animation completes
+    setTimeout(() => setSelectedReportId(null), 2000)
+  }
+
+  // Handle opening incident details modal
+  const handleViewDetails = (report) => {
+    setSelectedIncident(report)
+  }
+
+  // Handle locate on map from modal
+  const handleLocateOnMap = (reportId) => {
+    setSelectedReportId(reportId)
     setTimeout(() => setSelectedReportId(null), 2000)
   }
 
@@ -263,8 +372,25 @@ function App() {
           </div>
         </div>
 
-        {/* Right side: Analytics + Sound Toggle + Connection Status */}
+        {/* Right side: Filter Toggle + Analytics + Sound Toggle + Connection Status */}
         <div className="flex items-center gap-3">
+          {/* Filter Toggle Button */}
+          <button
+            onClick={() => setShowFilters(!showFilters)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-full transition-colors ${
+              showFilters || activeFilterCount > 0
+                ? 'bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30'
+                : 'bg-slate-700/50 text-slate-400 hover:bg-slate-700'
+            }`}
+            title="Toggle Search & Filters"
+          >
+            <Filter className="w-5 h-5" />
+            <span className="text-xs font-medium hidden sm:inline">
+              Filters {activeFilterCount > 0 && `(${activeFilterCount})`}
+            </span>
+            {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
+
           {/* Analytics Button */}
           <button
             onClick={() => setShowAnalytics(true)}
@@ -332,6 +458,26 @@ function App() {
       {/* ===== STATS HEADER ===== */}
       <StatsHeader reports={reports} loading={loading} />
 
+      {/* ===== FILTER PANEL ===== */}
+      {showFilters && (
+        <FilterPanel
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          dateRange={dateRange}
+          onDateRangeChange={setDateRange}
+          customStartDate={customStartDate}
+          onCustomStartDateChange={setCustomStartDate}
+          customEndDate={customEndDate}
+          onCustomEndDateChange={setCustomEndDate}
+          statusFilter={statusFilter}
+          onStatusFilterChange={setStatusFilter}
+          typeFilter={typeFilter}
+          onTypeFilterChange={setTypeFilter}
+          onClearFilters={clearAllFilters}
+          activeFilterCount={activeFilterCount}
+        />
+      )}
+
       {/* ===== MAIN CONTENT ===== */}
       <main className="flex-1 flex overflow-hidden">
         {/* LEFT: Map Panel (66%) */}
@@ -341,7 +487,7 @@ function App() {
               <MapPin className="w-4 h-4 text-emerald-400" />
               Live Incident Map
             </h2>
-            {severityFilter !== 'All' && (
+            {activeFilterCount > 0 && (
               <span className="text-xs text-slate-400">
                 Showing {filteredReports.length} of {reports.length} reports
               </span>
@@ -361,6 +507,7 @@ function App() {
           selectedReportId={selectedReportId}
           newReportId={newReport?.id}
           onStatusChange={updateReportStatus}
+          onViewDetails={handleViewDetails}
         />
       </main>
 
@@ -369,6 +516,16 @@ function App() {
         <AnalyticsPanel 
           reports={reports} 
           onClose={() => setShowAnalytics(false)} 
+        />
+      )}
+
+      {/* ===== INCIDENT DETAILS MODAL ===== */}
+      {selectedIncident && (
+        <IncidentDetailsModal
+          report={selectedIncident}
+          onClose={() => setSelectedIncident(null)}
+          onStatusChange={updateReportStatus}
+          onLocateOnMap={handleLocateOnMap}
         />
       )}
     </div>

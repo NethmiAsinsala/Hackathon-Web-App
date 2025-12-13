@@ -143,9 +143,23 @@ function IncidentMap({ reports = [], selectedReportId = null }) {
             }}
           >
             <Popup>
-              <div className="min-w-[150px]">
+              <div className="min-w-[200px] max-w-[280px]">
                 <div className="font-bold text-gray-800">{report.type || 'Unknown'}</div>
                 <div className="text-sm text-gray-600 mt-1">{report.description || 'No description'}</div>
+                
+                {/* Show image if available */}
+                {report.photoData && (
+                  <div className="mt-2">
+                    <img 
+                      src={report.photoData} 
+                      alt="Incident photo" 
+                      className="w-full h-auto rounded-md border border-gray-200 max-h-[150px] object-cover cursor-pointer"
+                      onClick={() => window.open(report.photoData, '_blank')}
+                      title="Click to view full size"
+                    />
+                  </div>
+                )}
+                
                 <div className="mt-2 flex items-center justify-between">
                   <span 
                     className="text-xs font-semibold px-2 py-1 rounded"
